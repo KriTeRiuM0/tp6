@@ -1,0 +1,111 @@
+package com.example.studentmanagement.controller;
+
+import com.example.studentmanagement.entity.Student;
+import com.example.studentmanagement.service.StudentService;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@SpringBootTest
+class StudentControllerTest {
+
+    @Mock
+    private StudentService studentService;
+
+    @InjectMocks
+    private StudentController studentController;
+
+    @Test
+    void testSaveStudent() {
+        Student student = new Student();
+        student.setId(1);
+        student.setNom("Mido");
+        student.setPrenom("Ahmed");
+        student.setDateNaissance(new Date());
+
+        when(studentService.save(any(Student.class))).thenReturn(student);
+
+        ResponseEntity<Student> response = studentController.save(student);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("Mido", response.getBody().getNom());
+        assertEquals(1, response.getBody().getId());
+    }
+
+    @Test
+    void testDeleteStudent() {
+        when(studentService.delete(1)).thenReturn(true);
+        ResponseEntity<Void> response = studentController.delete(1);
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    }
+
+    @Test
+    void testDeleteStudentNotFound() {
+        when(studentService.delete(999)).thenReturn(false);
+        ResponseEntity<Void> response = studentController.delete(999);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void testFindAllStudents() {
+        Student student1 = new Student();
+        student1.setId(1);
+        student1.setNom("Dupont");
+        student1.setPrenom("Jean");
+
+        Student student2 = new Student();
+        student2.setId(2);
+        student2.setNom("Martin");
+        student2.setPrenom("Sophie");
+
+        when(studentService.findAll()).thenReturn(Arrays.asList(student1, student2));
+
+        ResponseEntity<List<Student>> response = studentController.findAll();
+
+        assertEquals(2, response.getBody().size());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Dupont", response.getBody().get(0).getNom());
+        assertEquals("Martin", response.getBody().get(1).getNom());
+    }
+
+    @Test
+    void testCountStudents() {
+        when(studentService.countStudents()).thenReturn(10L);
+        ResponseEntity<Long> response = studentController.countStudent();
+        assertEquals(10L, response.getBody());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void testFindByYear() {
+        when(studentService.findNbrStudentByYear()).thenReturn(Arrays.asList());
+        ResponseEntity<Collection<?>> response = studentController.findByYear();
+        assertEquals(0, response.getBody().size());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void testFindByYearWithData() {
+        Object[] year1 = {1985, 2L};
+        Object[] year2 = {1990, 1L};
+        List<Object[]> mockData = Arrays.asList(year1, year2);
+
+        when(studentService.findNbrStudentByYear()).thenAnswer(invocation -> mockData);
+        ResponseEntity<Collection<?>> response = studentController.findByYear();
+        assertEquals(2, response.getBody().size());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+}
+
